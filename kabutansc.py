@@ -42,48 +42,37 @@ dom = lxml.html.fromstring(html)
 target_xpath = '//*[@id="shijyounews"]/article/div'
 scraped_data = dom.xpath(target_xpath)
 # list
-codelists = []
+namelists, codelists, descriptions = [], [], []
 for news in scraped_data:
-    get_a = news.findall("a")
-    print(tostring(news, encoding="utf-8").decode())
-    # lxml.html.HtmlElement
-    for alink in get_a:
-        # print(alink.text)
-        # print("https://kabutan.jp" + alink.get("href"))
-        codelists.append("https://kabutan.jp" + alink.get("href"))
+    # news=lxml.html.HtmlElement
+    fundamentals = tostring(news, encoding="utf-8").decode().split("&lt;")
+    articles = tostring(news, encoding="utf-8").decode().replace("\n", "")
+    articles = articles.replace("　【悪材料】　　――――――――――――<br/>", "")
+    print(articles)
+    # 7行目から3step毎のdescriptionを取得する
+    for codelist in articles.split("<br/>")[7::3]:
+        # 空要素は除外する
+        if codelist != "":
+            # 銘柄名一覧
+            # print(codelist.split()[0])
+            namelists.append(codelist.split()[0])
+            # コードURL一覧
+            # print(codelist.split('"')[1])
+            codelists.append(codelist.split('"')[1])
+    # テスト出力
+    for i, a in enumerate(namelists):
+        print(i, a)
+    for i, a in enumerate(codelists):
+        print(i, a)
+
+    # print(fundamentals[4].split('"')[1])
+    # print(fundamentals[4].split("<br/>")[1])
+
+    # for i in range(4, len(fundamentals)):
+    #     print(fundamentals[i], end="////////////////\n")
+    #     print(fundamentals[i].split('"'))
+
     # タグ入り全文章
     # for line in tostring(news, encoding="utf-8").decode().split():
     #     if "]" in line:
     #         print(line)
-
-# 余分なやつをのける
-[codelists.pop(0) for _ in range(4)]
-
-# 銘柄のページ
-for i in range(len(codelists)):
-    codelist = codelists[i]
-    # print(str(i) + "回目のループ→", codelist)
-    r = requests.get(codelist)
-    time.sleep(0.2)
-    soup = BeautifulSoup(r.text, "html.parser")
-    el0 = soup.select("#kobetsu_left dd")
-    el = soup.select("#kobetsu_left tr")
-    try:
-        # 前日終値
-        # print(str+int)になってますよ
-        # print("始値" + chonint(el[0].select("td")[0].getText()))
-        # print("高値" + chonint(el[1].select("td")[0].getText()))
-        # print("安値" + chonint(el[2].select("td")[0].getText()))
-        # print("終値" + chonint(el[3].select("td")[0].getText()))
-        zp = chonint(el0[0].getText()[:-8])
-        # zp = el0[0].getText().split('(')[0]
-        op = chonint(el[0].select("td")[0].getText())
-        hp = chonint(el[1].select("td")[0].getText())
-        lp = chonint(el[2].select("td")[0].getText())
-        ep = chonint(el[3].select("td")[0].getText())
-        # hp-opが5%以上
-        # if ((hp - zp) / zp) - ((op - zp) / zp) > 0.05:
-        #     print(zp, op, hp)
-    except Exception as e:
-        print(e.message)
-        pass
