@@ -47,32 +47,19 @@ for news in scraped_data:
     # news=lxml.html.HtmlElement
     fundamentals = tostring(news, encoding="utf-8").decode().split("&lt;")
     articles = tostring(news, encoding="utf-8").decode().replace("\n", "")
-    articles = articles.replace("　【悪材料】　　――――――――――――<br/>", "")
-    print(articles)
+
     # 7行目から3step毎のdescriptionを取得する
-    for codelist in articles.split("<br/>")[7::3]:
-        # 空要素は除外する
-        if codelist != "":
+    for i, codelist in enumerate(articles.split("<br/>")[7:]):
+        if "【悪材料】" in codelist:
+            break
+        elif i % 3 == 0:
             # 銘柄名一覧
-            # print(codelist.split()[0])
-            namelists.append(codelist.split()[0])
+            print(codelist.split()[0])
+            # namelists.append(codelist.split()[0])
             # コードURL一覧
-            # print(codelist.split('"')[1])
-            codelists.append(codelist.split('"')[1])
-    # テスト出力
-    for i, a in enumerate(namelists):
-        print(i, a)
-    for i, a in enumerate(codelists):
-        print(i, a)
-
-    # print(fundamentals[4].split('"')[1])
-    # print(fundamentals[4].split("<br/>")[1])
-
-    # for i in range(4, len(fundamentals)):
-    #     print(fundamentals[i], end="////////////////\n")
-    #     print(fundamentals[i].split('"'))
-
-    # タグ入り全文章
-    # for line in tostring(news, encoding="utf-8").decode().split():
-    #     if "]" in line:
-    #         print(line)
+            print(codelist.split('"')[1])
+            # codelists.append(codelist.split('"')[1])
+        elif i % 3 == 1:
+            # 材料一覧
+            print(codelist.split()[0])
+            # codelists.append(codelist.split('"')[1])
