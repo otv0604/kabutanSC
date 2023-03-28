@@ -1,13 +1,14 @@
 import time
 import datetime
 import requests
+import re
 from bs4 import BeautifulSoup
 from lxml.etree import tostring
 import lxml.html
 import openpyxl as ol
 
 # 株価整形関数
-def Str2Int(num):
+def Str2Float(num):
     n = num.replace(",", "")
     return float(n)
 
@@ -60,9 +61,19 @@ for news in scraped_data:
             codelists.append("https://kabutan.jp" + codelist.split('"')[1])
         # 奇数列
         elif i % 2 == 1:
-            # 材料リストに追加
-            descriptions.append(codelist.split()[0])
+            # 材料リストに追加(コード部分を整形)
+            descriptions.append(
+                re.sub(
+                    r"&lt;<a\s+href=\"/stock/\?code=.*?\">(.*?)</a>&gt;",
+                    r"<\1>",
+                    codelist,
+                )
+            )
 
+# excelを読み込む処理
+wb = ol.load_workbook("kabutan.xlsx")
+ws = wb["Sheet1"]
+print("write start----------------------------")
 
 # [ページ]　銘柄
 for i in range(len(codelists)):
@@ -77,18 +88,19 @@ for i in range(len(codelists)):
     price = soup.select("#kobetsu_left tr")
     try:
         # 前日終値の日付部分を削除し成形　他株価は成形のみ
-        yesterday_endprice = Str2Int(meigara[0].getText()[:-8])
-        openprice = Str2Int(price[0].select("td")[0].getText())
-        highprice = Str2Int(price[1].select("td")[0].getText())
-        lowprice = Str2Int(price[2].select("td")[0].getText())
-        endprice = Str2Int(price[3].select("td")[0].getText())
-        # 始値から5%以上上昇orストップ高張り付き銘柄のみ抽出
-        if ((highprice - openprice) / yesterday_endprice) > 0.05 or (
-            highprice - lowprice == 0 and highprice - yesterday_endprice > 0
-        ):
+        yesterday_endprice = Str2Float(meigara[0].getText()[:-8])
+        openprice = Str2Float(price[0].select("td")[0].getText())
+        highprice = Str2Float(price[1].select("td")[0].getText())
+        lowprice = Str2Float(price[2].select("td")[0].getText())
+        endprice = Str2Float(price[3].select("td")[0].getText())
+
+        # 寄りからの上昇率
+        today_rising = (highprice - openprice) / yesterday_endprice * 100
+        # S高マーク
+        s_mark = price[1].select("td")[1].getText()
+        # 始値から5%以上上昇orストップ高引け銘柄のみ抽出
+        if (today_rising > 5) or (highprice == endprice and s_mark == "S"):
             # excelに保存する処理
-            wb = ol.load_workbook("kabutan.xlsx")
-            ws = wb["Sheet1"]
             max_row = ws.max_row + 1
             # 書き込んだ行を出力
             print(max_row)
