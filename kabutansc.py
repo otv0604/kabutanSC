@@ -63,22 +63,13 @@ for news in scraped_data:
         # 奇数列
         elif i % 2 == 1:
             # 材料リストに追加(コード部分を整形)
-            if "us.kabutan" in codelist:
-                descriptions.append(
-                    re.sub(
-                        r"&lt;<a\s+href=\"https://us.kabutan.jp/stocks/.*?\"\s+target=\"_us_site\">(.*?)</a>&gt;",
-                        r"<\1>",
-                        codelist,
-                    )
+            descriptions.append(
+                re.sub(
+                    r'&lt;<a[^>]*">(.*?)</a>&gt;',
+                    r"<\1>",
+                    codelist,
                 )
-            else:
-                descriptions.append(
-                    re.sub(
-                        r"&lt;<a\s+href=\"/stock/\?code=.*?\">(.*?)</a>&gt;",
-                        r"<\1>",
-                        codelist,
-                    )
-                )
+            )
 
 # excelを読み込む処理
 wb = ol.load_workbook("kabutan.xlsx")
